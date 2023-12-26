@@ -105,7 +105,12 @@ class JobInBuilderDetector : Detector(), Detector.UastScanner {
                                         op,
                                         context.getLocation(op),
                                         BRIEF_DESCRIPTION,
-                                        fix().replace().text("SupervisorJob()").with(null).build()
+                                        if (context.evaluator.dependencies?.getAll()?.any { lib->
+                                                lib.identifier.contains("androidx.lifecycle:lifecycle-viewmodel-ktx")
+                                            } == true
+                                            )
+                                                fix().replace().text("SupervisorJob()").with(null).build()
+                                            else null
                                     )
                             } else
                                 context.report(

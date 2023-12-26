@@ -1,30 +1,18 @@
 package ru.otus.homework.lintchecks
 
-import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.Category
-import com.android.tools.lint.detector.api.Context
 import com.android.tools.lint.detector.api.Detector
-import com.android.tools.lint.detector.api.GradleContext
-import com.android.tools.lint.detector.api.GradleScanner
 import com.android.tools.lint.detector.api.Implementation
-import com.android.tools.lint.detector.api.Incident
 import com.android.tools.lint.detector.api.Issue
 import com.android.tools.lint.detector.api.JavaContext
-import com.android.tools.lint.detector.api.LintFix
 import com.android.tools.lint.detector.api.Scope
 import com.android.tools.lint.detector.api.Severity
 import com.intellij.psi.PsiElement
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.ULambdaExpression
 import org.jetbrains.uast.UReferenceExpression
-import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.getParentOfType
-import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
 import org.jetbrains.uast.kotlin.KotlinUSimpleReferenceExpression
-import java.util.EnumSet
 
 @Suppress("UnstableApiUsage")
 class GlobalScopeDetector: Detector(), Detector.UastScanner {
@@ -58,6 +46,7 @@ class GlobalScopeDetector: Detector(), Detector.UastScanner {
     ) {
         var fix = ""
         reference.getParentOfType<UClass>()?.run {
+
             if (context.evaluator.extendsClass(
                     this,
                     "androidx.lifecycle.ViewModel"
@@ -72,7 +61,14 @@ class GlobalScopeDetector: Detector(), Detector.UastScanner {
                 )
                     fix = "lifecycleScope"
         }
+
+        var ktx = false
+
         if (fix.isNotEmpty()) {
+            ktx = context.evaluator.dependencies?.getAll()?.any { lib ->
+                lib.identifier.contains(if (fix == "viewModelScope") "androidx.lifecycle:lifecycle-viewmodel-ktx" else "androidx.lifecycle:lifecycle-runtime-ktx")
+            } ?: false
+
             var expression = reference.getParentOfType<UCallExpression>()
             while (expression != null) {
                 if (expression.receiver is KotlinUSimpleReferenceExpression) {
@@ -91,7 +87,7 @@ class GlobalScopeDetector: Detector(), Detector.UastScanner {
             reference,
             context.getLocation(reference),
             BRIEF_DESCRIPTION,
-            if (fix.isEmpty()) null
+            if ((fix.isEmpty()) or (!ktx)) null
             else
                 fix()
                     .replace()

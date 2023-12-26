@@ -49,6 +49,7 @@ class GlobalScopeDetectorTest {
                                 }
                             }
                         }
+                        
                     """.trimIndent()
                 )
             ).run()

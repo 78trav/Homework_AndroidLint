@@ -39,6 +39,15 @@ class GlobalScopeTestCase(private val scope: CoroutineScope) : ViewModel() {
         scope.launch {
             delay(1000)
             println("Hello World")
+
+            case4(GlobalScope)
+        }
+    }
+
+    private suspend fun case4(scope : CoroutineScope) {
+        scope.launch {
+            delay(1000)
+            println("Hello World")
         }
     }
 }
